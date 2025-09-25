@@ -1,5 +1,3 @@
-# data available in data folder, use this to download from NEONscience.org
-
 # download NEON water isotope data
 options(stringsAsFactors=F)
 library(neonUtilities)
