@@ -8,7 +8,7 @@ site <- "YELL"
 #entire data file for a site:
 zipsByProduct(dpID="DP4.00200.001", 
               package="expanded", #expanded gets qm data (basic just has qf final)
-              site= site, #choose site, could choose multiple (slow download)
+              site= site, #choose site, could choose multiple (but slow download)
               startdate="2017-01", enddate="2024-10", #default doesn't include provisional
               savepath="~/GEO_Thesis", 
               check.size=F)
@@ -28,11 +28,22 @@ iso <- stackEddy(filepath="~/GEO_Thesis/filesToStack00200",
                          "presAtm", "presCor", "temp", 
                          "tempAir", "tempSoni"))
 
-#pull out isotope data
-df <- iso[[site]] #convert to df, DOUBLE CHECK THIS WORKS
-write.csv(df, paste0("~/GEO_Thesis/iso_", site, ".csv")) #create .csv
-
-#pull out Science Review flags for review
+#pull out Science Review flags
 sciRevw <- iso[["scienceReviewFlags"]]
 write.csv(sciRevw, paste0("~/GEO_Thesis/sciRevw_", site, ".csv"))
+
+#pull out isotope data
+df <- iso[[site]] #convert to df
+
+#remove validation rows
+unique(df$verticalPosition)
+df <- subset(df, !verticalPosition %in% c("co2Arch", "co2High", 
+                                              "co2Low", "co2Med", 
+                                              "co2Zero", "h2oHigh", 
+                                              "h2oLow", "h2oMed"))
+
+#create .csv
+write.csv(df, paste0("~/GEO_Thesis/iso_", site, ".csv")) 
+
+
 
