@@ -5,12 +5,28 @@ library(lomb)
 
 wd <- getwd()
 
-sitech <- "YELL" # choose site
+###### Testing the artificial data ######
+
+df<- read.csv(paste0(wd, "/data/test.csv")) # 24 and 168 hr (7 day) cycles
+plot(x = df[,1], y = df[,9], pch = 19, cex = 0.3)
+
+#subset
+dfsub <- subset(df, elapsed >= 200 & elapsed <= 300)
+plot(x = dfsub[,1], y = dfsub[,9], pch = 19, cex = 0.3) # "diurnal" cycle is very clear
+
+mean(diff(df$elapsed)) # this is exactly what lsp uses after it removes NAs
+pg <- lsp(df[,c(1,9)], type = "period") # column 9 is the noisy+gapped data
+
+getpeaks(pg) # two clear peaks where they should be
+summary(pg)
+
+
+
+###### NEON data ######
+
+sitech <- "CPER" # choose site
 
 df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv"))
-
-#remove NAs from isotope data
-df <- df[!is.na(df$data.isoH2o.dlta18OH2o.mean),]
 
 #choose measurement level
 unique(df$verticalPosition)
@@ -30,13 +46,11 @@ df$elapsed <- df$hours - df$hours[1] # elapsed hours
 
 plot(x = df$timeBgn, y = df$data.isoH2o.dlta18OH2o.mean, pch = 19, cex = 0.3)
 
-mean(diff(df$timeBgn)) # avg time interval (probably used in lsp())
-
 #full data
 lsp_full <- lsp(df[,c(4,2)], 
                 type = "period", 
                 to = (nrow(df)/2))
-getpeaks(lsp_full)
+getpeaks(lsp_full) #9477/24 = 394 days...
 summary(lsp_full)
 
 #one year of data
@@ -44,29 +58,43 @@ df_year <- subset(df, timeBgn >= as.POSIXct("2022-01-01 00:00", tz="GMT") &
                   timeBgn <= as.POSIXct("2023-01-01 00:00", tz="GMT"))
 df_year$elapsed <- df_year$hours - df_year$hours[1] # elapsed from start of year
 plot(x = df_year$timeBgn, y = df_year$data.isoH2o.dlta18OH2o.mean, pch = 19, cex = 0.3)
-mean(diff(df_year$timeBgn))
 
 lsp_year <- lsp(df_year[,c(4,2)], 
             type = "period", 
             to = nrow(df_year)/2, 
-            ofac = 1)
+            ofac = 1) # 1 is default ofac
 getpeaks(lsp_year)
 summary(lsp_year)
 pershow(lsp_year)
 
-#couple of months of fairly complete data
-df_mos <- subset(df, timeBgn >= as.POSIXct("2020-12-25 00:00", tz="GMT") & 
-                   timeBgn <= as.POSIXct("2021-03-01 00:00", tz="GMT"))
+#couple of months
+df_mos <- subset(df, timeBgn >= as.POSIXct("2022-05-01 00:00", tz="GMT") & 
+                   timeBgn <= as.POSIXct("2022-07-01 00:00", tz="GMT"))
 plot(x = df_mos$timeBgn, y = df_mos$data.isoH2o.dlta18OH2o.mean, pch = 19, cex = 0.3)
 df_mos$elapsed <- df_mos$hours - df_mos$hours[1] # elapsed from start of time period
-mean(diff(df_mos$timeBgn))
 
 lsp_mos <- lsp(df_mos[,c(4,2)], 
              type = "period", 
-             to = nrow(df_mos)/2, 
+             #to = nrow(df_mos)/2, 
              ofac = 1)
-getpeaks(lsp_mos)
+getpeaks(lsp_mos) # 243/24 = 10 day period
 summary(lsp_mos)
 
+lsp_mos <- lsp(df_mos[,c(4,2)], 
+               type = "period", 
+               #to = nrow(df_mos)/2, 
+               ofac = 4) #increase ofac to sample more frequencies
+getpeaks(lsp_mos) # diurnal still doesn't come up but 6-10 day cycles do
 
 
+#closer look at a few days
+df_days <- subset(df, timeBgn >= as.POSIXct("2022-05-20 00:00", tz="GMT") & 
+                   timeBgn <= as.POSIXct("2022-06-01 00:00", tz="GMT"))
+plot(x = df_days$timeBgn, y = df_days$data.isoH2o.dlta18OH2o.mean, pch = 19, cex = 0.3)
+
+df_days$elapsed <- df_days$hours - df_days$hours[1] # elapsed from start of time period
+
+lsp_days <- lsp(df_days[,c(4,2)], 
+               type = "period", 
+               ofac = 1)
+getpeaks(lsp_days) # no clear diurnal period
