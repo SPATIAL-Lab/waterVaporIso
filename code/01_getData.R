@@ -2,6 +2,9 @@
 options(stringsAsFactors=F)
 library(neonUtilities)
 
+wd <- getwd()
+savepath <- #BEFORE COMMITTING, CREATE SAVEPATH SHORTCUT
+
 #choose site
 site <- "YELL"
 
@@ -43,7 +46,7 @@ df <- subset(df, !verticalPosition %in% c("co2Arch", "co2High",
                                               "h2oLow", "h2oMed"))
 
 #create .csv
-write.csv(df, paste0("~/GEO_Thesis/iso_", site, ".csv")) 
+write.csv(df, paste0(wd, "/data/iso_", site, "_releaseYYYY.csv"), row.names = F)
 
 
 
