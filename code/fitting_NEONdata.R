@@ -31,9 +31,9 @@ df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
 df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 df$time <- as.numeric(df$timeBgn) /60/60/24 #seconds to days
 #create elapsed column
-df$elapsed <- df$time - df$time[1]
+df$elapsed_days <- df$time - df$time[1]
 
-x <- df$elapsed
+x <- df$elapsed_days
 y <- df$iso
 
 y <- (y - mean(y, na.rm = T)) / sd(y, na.rm = T)
@@ -120,5 +120,12 @@ lines(x, resid2, col = "darkgreen", lwd = 0.2)
 #       legend = c("Model using phi = red/blue", "Without phi = orange/green"), 
 #       bty = "n")
 
+df_new <- df[,c("timeBgn", "elapsed_days", "iso")]
+df_new$residuals_phi <- resid
+df_new$rediduals_no_phi <- resid2
+write.csv(df_new, paste0(wd, "/results/fitting_NEONdata_results.csv"), row.names = F)
+
 print(c("MODELS USED:", model, model2))
 print(results)
+
+

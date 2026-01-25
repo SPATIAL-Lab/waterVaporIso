@@ -73,6 +73,9 @@ getpeaks(pg)
 # lower window (=12) preserves the 24hr cycle but doesn't amplify it
 
 
+
+
+
 ###### NEON data ######
 
 sitech <- "CPER" # choose site
@@ -157,3 +160,21 @@ lsp_days <- lsp(df_days[,c(3,2)],
 getpeaks(lsp_days) 
 
 
+
+
+##### Use NEON data from "fitting_NEONdata.R" #####
+data <- read.csv(paste0(wd, "/results/fitting_NEONdata_results.csv"))
+
+data$timeBgn <- ifelse(nchar(data$timeBgn) == 10,       # length of "YYYY-MM-DD"
+                     paste0(data$timeBgn, " 00:00:00"), # append midnight
+                     data$timeBgn)
+data$timeBgn <- as.POSIXct(data$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
+
+plot(x = data$timeBgn, y = data$rediduals_no_phi, pch = 19, cex = 0.3)
+
+lsp <- lsp(data[,c(2,4)], #use the elapsed column = 2 for time
+                type = "period", 
+                normalize = "press")
+getpeaks(lsp) 
+summary(lsp)
+pershow(lsp_full)
