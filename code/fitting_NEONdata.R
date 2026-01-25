@@ -1,10 +1,12 @@
-# same as code/fitting.R
-# but use actual data 
+# same as code/fitting.R but use NEON data 
 # fit a sine wave to the longest frequency component, subtract that out
-# from there, use L-S or another method to detect smaller frequencies
+# from there, use L-S or another method to detect smaller frequencies (not in this script)
+
 
 ### INPUTS ##################################################
+
 # define model starting values (getting these close is very important)
+
 period <- 340 #period in days - an estimate based on what we know (i.e. annual cycle)
 phi <- 0 #phase shift, 0 is fine to start
 
@@ -12,6 +14,7 @@ phi <- 0 #phase shift, 0 is fine to start
 
 
 ### end inputs ##############################################
+
 
 
 ##
@@ -40,7 +43,7 @@ y <- (y - mean(y, na.rm = T)) / sd(y, na.rm = T)
 
 plot(x, y, cex = 0.3, pch = 19, 
      main = "Raw data", 
-     xlab = "elapsed hours", 
+     xlab = "elapsed days", 
      ylab = "z-scored")
 
 # starting values for models

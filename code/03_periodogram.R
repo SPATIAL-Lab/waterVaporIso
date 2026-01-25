@@ -172,9 +172,9 @@ data$timeBgn <- as.POSIXct(data$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
 plot(x = data$timeBgn, y = data$rediduals_no_phi, pch = 19, cex = 0.3)
 
-lsp <- lsp(data[,c(2,4)], #use the elapsed column = 2 for time
+lsp <- lsp(data[,c(2,5)], #use the elapsed column = 2 for time
                 type = "period", 
                 normalize = "press")
 getpeaks(lsp) 
 summary(lsp)
-pershow(lsp_full)
+pershow(lsp)
