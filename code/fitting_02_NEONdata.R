@@ -20,6 +20,44 @@ plot(df_res$timeBgn, df_res$rediduals_no_phi, col = "darkblue", lwd = 0.2, type 
      ylab = "residuals after z-scored annual model fit")
 
 
+#### fit daily and weekly frequencies directly using nls() ####
+
+# daily
+period_day <- 1 #days
+
+x <- df_res$elapsed_days
+y <- df_res$rediduals_no_phi
+ 
+A <- (max(y)-min(y))/2 #amplitude
+d <- mean(y) #vertical offset
+fr <- 1/period_day #convert period to frequency
+
+model3 <- y ~ b * sin(2*pi*fr*x) + c * cos(2*pi*fr*x) + d
+
+fit3 <- nls(model3, 
+            start = list(
+              b = A,
+              c = 1, 
+              fr = fr, 
+              d = d))
+
+summary(fit3)
+pred_values3 <- predict(fit3)
+
+# plot
+lines(df_res$timeBgn, pred_values3, col = "orange", lwd = 1)
+
+# zoom in
+sub1 <- df_res[200:500,]
+sub1$pred3 <- pred_values3[200:500] 
+
+plot(sub1$timeBgn, sub1$rediduals_no_phi, col = "darkblue", lwd = 0.2, type = "l", 
+     xlab = "elapsed days",
+     ylab = "residuals after z-scored annual model fit")
+lines(sub1$timeBgn, sub1$pred3, col = "orange")
+
+
+
 #### lomb periodogram on residuals ####
 
 lsp_resid <- lsp(df_res[,c("elapsed_days", "rediduals_no_phi")], 

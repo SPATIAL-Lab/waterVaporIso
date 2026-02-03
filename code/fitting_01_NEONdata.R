@@ -83,7 +83,7 @@ pred_values <- predict(fit)
 resid <- y - pred_values
 
 # plot
-#png(paste0(wd, "/media/fitting_NEONdata_plot.png"), width = 800, height = 600)
+png(paste0(wd, "/media/fitting_01_plot.png"), width = 800, height = 600)
 plot(x, y, cex = 0.3, pch = 19, 
      main = "Model fits (red/orange) \nand after residuals are subtracted (blue/green)", 
      col = "gray", 
@@ -122,7 +122,7 @@ resid2 <- y - pred_values2
 # plot
 lines(x, pred_values2, col = "orange", lwd = 1)
 lines(x, resid2, col = "darkgreen", lwd = 0.2)
-#dev.off() #use with png() to close writing the plot
+dev.off() #use with png() to close writing the plot
 
 #legend("topright", 
 #       legend = c("Model using phi = red/blue", "Without phi = orange/green"), 
