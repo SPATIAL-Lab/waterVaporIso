@@ -6,15 +6,18 @@ wd <- getwd()
 savepath <- #BEFORE COMMITTING, CREATE SAVEPATH SHORTCUT
 
 #choose site
-site <- "YELL"
+site <- "ONAQ"
 
 #entire data file for a site:
 zipsByProduct(dpID="DP4.00200.001", 
-              package="expanded", #expanded gets qm data (basic just has qf final)
+              package="basic", #expanded gets qm data (basic just has qf final)
               site= site, #choose site, could choose multiple (but slow download)
-              startdate="2017-01", enddate="2024-10", #default doesn't include provisional
-              savepath="~/GEO_Thesis", 
-              check.size=F)
+              startdate= NA, #NA = all data 
+              enddate= NA, 
+              savepath= wd, 
+              check.size= F, 
+              include.provisional= T) #default doesn't include provisional
+
 
 #just isotopes and water vapor:
 iso <- stackEddy(filepath="~/GEO_Thesis/filesToStack00200",
@@ -46,7 +49,7 @@ df <- subset(df, !verticalPosition %in% c("co2Arch", "co2High",
                                               "h2oLow", "h2oMed"))
 
 #create .csv
-write.csv(df, paste0(wd, "/data/iso_", site, "_releaseYYYY.csv"), row.names = F)
+write.csv(df, paste0(wd, "iso_", site, "_release2026.csv"), row.names = F)
 
 
 
