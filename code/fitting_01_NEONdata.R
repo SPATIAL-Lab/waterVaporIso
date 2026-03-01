@@ -1,21 +1,27 @@
 # same as code/fitting.R but use NEON data 
+# create clean data from 02_cleanData first
 # fit a sine wave to the longest frequency component, subtract that out
 # from there, use L-S or another method to detect smaller frequencies (not in this script)
 
 
 ### INPUTS ##################################################
 
-# define model starting values (getting these close is very important)
+# choose site and level
+site <- "CPER"
+ml <- 10         #10 or "top"
 
+# define model starting values (getting these close is very important)
 period <- 340 #period in days - an estimate based on what we know (i.e. annual cycle)
 phi <- 0 #phase shift, 0 is fine to start
 
-# note amplitude is defined later = (max(y)-min(y))/2
+# amplitude is defined later = (max(y)-min(y))/2
 
 
 ### end inputs ##############################################
 
-
+#load data
+wd <- getwd()
+df<- read.csv(paste0(wd, "/data/iso_", site, "_", ml, "_clean.csv"))
 
 ##
 A_true <- "??"      
@@ -23,9 +29,6 @@ fr_true <- "a year"
 phi_true <- "??"   
 d_true <- "??"
 fr <- 1/period
-
-wd <- getwd()
-df<- read.csv(paste0(wd, "/data/iso_YELL_clean.csv"))
 
 #create numeric dates
 df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
@@ -39,7 +42,7 @@ df$elapsed_days <- df$time - df$time[1]
 x <- df$elapsed_days
 y <- df$iso
 
-y <- (y - mean(y, na.rm = T)) / sd(y, na.rm = T)
+y <- (y - mean(y)) / sd(y)
 
 plot(x, y, cex = 0.3, pch = 19, 
      main = "Raw data", 
@@ -83,7 +86,7 @@ pred_values <- predict(fit)
 resid <- y - pred_values
 
 # plot
-png(paste0(wd, "/media/fitting_01_plot.png"), width = 800, height = 600)
+png(paste0(wd, "/media/fitting_01_", site, "_plot.png"), width = 800, height = 600)
 plot(x, y, cex = 0.3, pch = 19, 
      main = "Model fits (red/orange) \nand after residuals are subtracted (blue/green)", 
      col = "gray", 
@@ -135,7 +138,7 @@ df_new$rediduals_no_phi <- resid2
 if(!dir.exists(paste0(wd, "/data/output"))){
   dir.create(paste0(wd, "/data/output"))
 }
-write.csv(df_new, paste0(wd, "/data/output/fitting_NEONdata_results.csv"), row.names = F)
+write.csv(df_new, paste0(wd, "/data/output/fitting_NEONdata_results_", site, "_", ml, ".csv"), row.names = F)
 
 print(c("MODELS USED:", model, model2))
 print(results)

@@ -6,13 +6,22 @@ library(ggplot2)
 
 wd <- getwd()
 
-sitech <- "YELL" #choose site
+sitech <- "CPER" #choose site
 
 df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv"))
 
 unique(df$verticalPosition)
-ml <- 10 #choose measurement level
-df <- subset(df, verticalPosition %in% ml)
+ml <- 10 #choose measurement level: 10 or "top"
+
+#reduce to chosen measurement level
+if (ml == 10) {
+  df <- subset(df, verticalPosition %in% 10)
+} else if (ml == "top") {
+  df <- subset(df, verticalPosition %in% max(df$verticalPosition))
+} else {
+  print("no ml")
+}
+
 
 df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
                      paste0(df$timeBgn, " 00:00:00"), # append midnight
@@ -76,7 +85,7 @@ for (i in 1:nrow(cleaned)) {
 clean_data <- subset(cleaned, !is.na(iso))
 clean_data <- clean_data[,c("timeBgn", "iso")]
 
-write.csv(clean_data, paste0(wd, "/data/iso_", sitech, "_clean.csv"), row.names = F)
+write.csv(clean_data, paste0(wd, "/data/iso_", sitech,"_", ml, "_clean.csv"), row.names = F)
 
 
 
