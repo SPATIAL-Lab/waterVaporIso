@@ -7,8 +7,8 @@
 ### INPUTS ##################################################
 
 # choose site and level
-site <- "CPER"
-ml <- 10         #10 or "top"
+site <- "WREF"
+ml <- "top"        # 10 or "top"
 
 # define model starting values (getting these close is very important)
 period <- 340 #period in days - an estimate based on what we know (i.e. annual cycle)

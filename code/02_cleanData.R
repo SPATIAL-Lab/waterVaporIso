@@ -1,4 +1,6 @@
 # Review data for quality flags, low humidity (<5000 ppm), and outliers 
+# ONLY INCLUDES CLEANING OUTLIERS (by removing data >3 sd from a rolling 6-week mean)
+# Eventually add back in LH and quality/science review flags if necessary
 
 #install.packages("zoo")
 library(zoo)
@@ -8,10 +10,10 @@ wd <- getwd()
 
 sitech <- "CPER" #choose site
 
-df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv"))
+df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv")) #change release date, eventually get them all on 2026
 
 unique(df$verticalPosition)
-ml <- 10 #choose measurement level: 10 or "top"
+ml <- "top" #choose measurement level: 10 or "top"
 
 #reduce to chosen measurement level
 if (ml == 10) {
@@ -42,12 +44,12 @@ roll_mean <- rollapply(df$data.isoH2o.dlta18OH2o.mean,
                        na.rm = T, 
                        fill = NA, 
                        partial = T)
-sum(is.na(roll_mean))
+#sum(is.na(roll_mean))
 
 ggplot(df, aes(x = timeBgn, y = data.isoH2o.dlta18OH2o.mean)) +
   geom_point(size = 0.8, color = "lightblue") +
   labs(x = "date", y = expression(paste(delta^{18}, "O permil")), 
-       title = paste(sitech, "Water Vapor Isotopes")) +
+       title = paste(sitech, "Water Vapor Isotopes (ml = ", ml, ")")) +
   guides(color = guide_legend(override.aes = list(size = 8))) +
   theme_minimal() +
   geom_line(aes(y = roll_mean))
@@ -61,7 +63,7 @@ lower_bound <- roll_mean - roll_sd*3
 ggplot(df, aes(x = timeBgn, y = data.isoH2o.dlta18OH2o.mean)) +
   geom_point(size = 0.8, color = "lightblue") +
   labs(x = "date", y = expression(paste(delta^{18}, "O permil")), 
-       title = paste(sitech, "Water Vapor Isotopes")) +
+       title = paste(sitech, "Water Vapor Isotopes (ml = ", ml, ")")) +
   theme_minimal() +
   geom_line(aes(y = upper_bound)) +
   geom_line(aes(y = roll_mean), color = "red") +
