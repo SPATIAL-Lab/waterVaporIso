@@ -7,10 +7,8 @@ library(ggplot2)
 site <- "WREF"
 ml <- 10        #10 or "top"
 
-# load data from fitting_01_NEONdata.R
-wd <- getwd()
-
-df_res<- read.csv(paste0(wd, "/data/output/fitting_NEONdata_results_", site, "_", ml, ".csv"))
+# load data from fitting_01_NEONdata
+df_res <- read.csv(paste0("data/output/fitting_NEONdata_results_", site, "_", ml, ".csv"))
 
 df_res$timeBgn <- ifelse(nchar(df_res$timeBgn) == 10,       # length of "YYYY-MM-DD"
                          paste0(df_res$timeBgn, " 00:00:00"), # append midnight
@@ -36,7 +34,7 @@ y <- df_res$residuals_phi
 a <- (max(y)-min(y))/2 #amplitude
 #d <- mean(y) #vertical offset
 f <- 1/period_day #convert period to frequency
-phi <- pi #phase offset
+phi <- 0 #phase offset
 
 #model <- y ~ b * sin(2*pi*fr*x) + c * cos(2*pi*fr*x) + d
 model <- y ~ a * sin(2*pi*f*x + phi)
