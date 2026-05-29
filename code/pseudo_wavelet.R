@@ -8,7 +8,7 @@
 
 library(ggplot2)
 library(dplyr)
-
+library(lubridate)
 
 
 site <- "HARV"
@@ -32,15 +32,15 @@ values = df$residuals_phi
 # create modified L-S function for discrete periods
 lomb_scargle_discrete <- function(times, values, periods) {
   # Normalize (subtract mean)
-  y <- values - mean(values)
+  y <- values - mean(values) #this is needed for LS power calc
   n <- length(times) #when windowing, this should just be the window length
   powers <- numeric(length(periods))
   
-  for (i in seq_along(periods)) {
+  for (i in seq_along(periods)) { #for each specified period, compute the power
     omega <- 2 * pi / periods[i]
     
     # Compute the phase offset tau (Barning/Lomb formulation)
-    tan2tau <- sum(sin(2 * omega * times)) / sum(cos(2 * omega * times))
+    tan2tau <- sum(sin(2 * omega * times)) / sum(cos(2 * omega * times)) #*2 is already in omega, and it's also needed here
     tau     <- atan(tan2tau) / (2 * omega)
     
     # Shifted time
@@ -66,7 +66,7 @@ lomb_scargle_discrete <- function(times, values, periods) {
 # create df at the end with power of each period per window
 
 sliding_ls <- function(times, values, periods,
-                       window = 20, step = 2) {
+                       window, step = 2) { #chose enough days to resolve 14-day periods, I think wavelet usually does a step of 1
   
   t_start <- seq(min(times), max(times) - window, by = step)
   
@@ -74,7 +74,9 @@ sliding_ls <- function(times, values, periods,
     idx <- times >= t0 & times < (t0 + window)
     
     # Skip windows with too few points to fit. Every point sampled would be = window * 48
-    if (sum(idx) < (window * 24) / 2) return(NULL) # want at least 1/2 of the days to be present?
+    if (sum(idx) < (window * 48) / 2) return(NULL) # want at least 1/2 of the days to be present?
+    
+   #this is where I'd apply a Hanning window maybe?
     
     res        <- lomb_scargle_discrete(times[idx], values[idx], periods)
     res$t_mid  <- t0 + window / 2   # label window by its center time
@@ -84,14 +86,15 @@ sliding_ls <- function(times, values, periods,
   bind_rows(results)
 }
 
-my_periods <- c(1, 5:14)
+periods <- c(1)
+window <- 60 #days
 
 ls_map <- sliding_ls(
   times = times, 
   values = values, 
-  periods = my_periods, #days
-  window = 20, 
-  step = 2)
+  periods = periods, #days
+  window = window,
+)
 
 # all years on one plot:
 ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) +
@@ -103,7 +106,7 @@ ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) 
                 "#c084fc", "#f59e0b", "#fde68a"),
     name    = "LS Power"
   ) +
-  scale_y_discrete(limits = rev(as.character(sort(my_periods)))) +
+  scale_y_discrete(limits = rev(as.character(sort(periods)))) +
   labs(
     x     = "Date (window center)",
     y     = "Period",
@@ -117,20 +120,18 @@ ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) 
   )
 
 # facet years:
-library(lubridate)
-
 # Add year and day-of-year columns to your results
 ls_map$date   <- origin + ls_map$t_mid * 86400
 ls_map$year   <- year(ls_map$date)
 ls_map$doy    <- yday(ls_map$date)   # day of year (1–365) as shared x-axis
 
 ggplot(ls_map, aes(x = doy, y = factor(period), fill = power)) +
-  geom_tile() +
+  geom_tile(aes(width = 2)) +
   scale_fill_gradientn(
     colours = c("gray85", "gray60", "#b39ddb", "#7B2D8B", "darkblue", "darkorange"),
     name    = "LS Power"
   ) +
-  scale_y_discrete(limits = rev(as.character(sort(my_periods)))) +
+  scale_y_discrete(limits = rev(as.character(sort(periods)))) +
   scale_x_continuous(
     breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
     labels = c("Jan","Feb","Mar","Apr","May","Jun",
@@ -140,7 +141,7 @@ ggplot(ls_map, aes(x = doy, y = factor(period), fill = power)) +
   labs(
     x     = NULL,
     y     = "Period",
-    title = paste0("Sliding Window Lomb-Scargle Periodogram \n", site, ", ", ml)) +
+    title = paste0(window,"-day Window Lomb-Scargle Periodogram \n", site, ", ", ml)) +
   theme_minimal(base_size = 13) +
   theme(
     panel.grid      = element_blank(),

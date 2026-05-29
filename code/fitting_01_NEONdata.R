@@ -42,7 +42,7 @@ df$elapsed_days <- df$time - df$time[1]
 x <- df$elapsed_days
 y <- df$iso
 
-y <- (y - mean(y)) / sd(y)
+y <- (y - mean(y)) / sd(y) #z-scored
 
 plot(x, y, cex = 0.3, pch = 19, 
      main = "Raw data", 
