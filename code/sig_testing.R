@@ -1,18 +1,22 @@
-#significance testing using dplR package
-#The redfit function in dplR is a port of Schulz’s REDFIT (version 3.8e) program 
-#and estimates the red-noise spectrum of a time series (Schulz & Mudelsee, 2002) 
-#with optional testing of that spectrum against a red-noise background using 
-#Monte Carlo simulations.
+# Significance testing using dplR package
+#
+# The redfit function in dplR is a part of Schulz’s REDFIT (version 3.8e) program 
+# and estimates the red-noise spectrum of a time series (Schulz & Mudelsee, 2002) 
+# with optional testing of that spectrum against a red-noise background using 
+# Monte Carlo simulations.
 
-install.packages("dplR")
+#install.packages("dplR")
 library(dplR)
 
+
+# 
 redf.dat <- redfit(x = segment_values, t = segment_times, nsim = 100)
 
 par(tcl = 0.5, mar = rep(2.2, 4), mgp = c(1.1, 0.1, 0),xaxs="i")
 
+
 plot(1/redf.dat[["freq"]][7:100], redf.dat[["gxxc"]][7:100],
-     ylim = range(redf.dat[["ci99"]], redf.dat[["gxxc"]]),
+     ylim = range(redf.dat[["ci99"]]/2, redf.dat[["gxxc"]]),
      type = "n", ylab = "Spectrum", xlab = "Period (days)",
      main = "testing redfit() on a 60-day segment of data",
      axes = FALSE)

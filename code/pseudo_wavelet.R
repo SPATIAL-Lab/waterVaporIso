@@ -9,10 +9,11 @@
 library(ggplot2)
 library(dplyr)
 library(lubridate)
+library(scales)
 
 
-site <- "HARV"
-ml <- "top"        #10 or "top"
+site <- "CPER"
+ml <- "top"       #10 or "top"
 
 # load data from fitting_01_NEONdata
 df <- read.csv(paste0("data/output/fitting_NEONdata_results_", site, "_", ml, ".csv"))
@@ -29,21 +30,19 @@ times = df$elapsed_days
 values = df$residuals_phi
 
 
-# create modified L-S function for discrete periods
+# build modified L-S function for discrete periods
 lomb_scargle_discrete <- function(times, values, periods) {
-  # Normalize (subtract mean)
-  y <- values - mean(values) #this is needed for LS power calc
-  n <- length(times) #when windowing, this should just be the window length
+  y <- values - mean(values) #this is used in L-S equation; IS THIS PER SEGMENT OR WHOLE DATASET?
   powers <- numeric(length(periods))
   
   for (i in seq_along(periods)) { #for each specified period, compute the power
     omega <- 2 * pi / periods[i]
     
-    # Compute the phase offset tau (Barning/Lomb formulation)
+    # Compute tau (phase offset)
     tan2tau <- sum(sin(2 * omega * times)) / sum(cos(2 * omega * times)) #*2 is already in omega, and it's also needed here
     tau     <- atan(tan2tau) / (2 * omega)
     
-    # Shifted time
+    # cos and sin terms
     ct <- cos(omega * (times - tau))
     st <- sin(omega * (times - tau))
     
@@ -60,13 +59,9 @@ lomb_scargle_discrete <- function(times, values, periods) {
   )
 }
 
-# eventually add white/red noise (probably red?) for significance testing?
-
-# loop through all 20-day windows, stepping every 2 days
-# create df at the end with power of each period per window
-
+# build sliding window function to apply modified L-S to each window
 sliding_ls <- function(times, values, periods,
-                       window, step = 2) { #chose enough days to resolve 14-day periods, I think wavelet usually does a step of 1
+                       window, step) { #chose enough days to resolve 14-day periods, I think wavelet usually does a step of 1
   
   t_start <- seq(min(times), max(times) - window, by = step)
   
@@ -76,7 +71,7 @@ sliding_ls <- function(times, values, periods,
     # Skip windows with too few points to fit. Every point sampled would be = window * 48
     if (sum(idx) < (window * 48) / 2) return(NULL) # want at least 1/2 of the days to be present?
     
-   #this is where I'd apply a Hanning window maybe?
+   #THIS IS WHERE A HANNING WINDOW WILL GO
     
     res        <- lomb_scargle_discrete(times[idx], values[idx], periods)
     res$t_mid  <- t0 + window / 2   # label window by its center time
@@ -86,15 +81,53 @@ sliding_ls <- function(times, values, periods,
   bind_rows(results)
 }
 
-periods <- c(1)
-window <- 60 #days
+# define parameters
+periods <- c(5:14)
+window <- 45 #days
+step <- 2 #days
 
 ls_map <- sliding_ls(
   times = times, 
   values = values, 
   periods = periods, #days
   window = window,
+  step = step
 )
+
+
+# facet years:
+ls_map$date   <- origin + ls_map$t_mid * 86400
+ls_map$year   <- year(ls_map$date)
+ls_map$doy    <- yday(ls_map$date)   # day of year (1–365) as shared x-axis
+
+ggplot(ls_map, aes(x = doy, y = factor(period), fill = power)) +
+  geom_tile(aes(width = step)) + #width should equal step size
+  scale_fill_gradientn(
+    colours = c("gray85", "gray60", "#b39ddb", "#7B2D8B", "darkblue", "darkorange"),
+    name    = "LS Power", 
+    limits  = c(0.01, 0.4),
+    oob     = scales::squish
+  ) +
+  scale_y_discrete(limits = rev(as.character(sort(periods)))) +
+  scale_x_continuous(
+    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
+    labels = c("Jan","Feb","Mar","Apr","May","Jun",
+               "Jul","Aug","Sep","Oct","Nov","Dec")
+  ) +
+  facet_grid(year ~ ., switch = "y") +   # stack years vertically
+  labs(
+    x     = NULL,
+    y     = "Period",
+    title = paste0(window,"-day Window Lomb-Scargle Periodogram \n", site, ", ", ml)) +
+  theme_minimal(base_size = 13) +
+  theme(
+    panel.grid      = element_blank(),
+    plot.title      = element_text(hjust = 0.5, face = "bold"),
+    #strip.placement = "outside",         # year labels on left outside axis
+    axis.text.x     = element_text(angle = 45, hjust = 1),
+    legend.position = "right"
+  )
+
 
 # all years on one plot:
 ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) +
@@ -116,38 +149,6 @@ ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) 
   theme(
     panel.grid    = element_blank(),
     plot.title    = element_text(hjust = 0.5, face = "bold"),
-    legend.position = "right"
-  )
-
-# facet years:
-# Add year and day-of-year columns to your results
-ls_map$date   <- origin + ls_map$t_mid * 86400
-ls_map$year   <- year(ls_map$date)
-ls_map$doy    <- yday(ls_map$date)   # day of year (1–365) as shared x-axis
-
-ggplot(ls_map, aes(x = doy, y = factor(period), fill = power)) +
-  geom_tile(aes(width = 2)) +
-  scale_fill_gradientn(
-    colours = c("gray85", "gray60", "#b39ddb", "#7B2D8B", "darkblue", "darkorange"),
-    name    = "LS Power"
-  ) +
-  scale_y_discrete(limits = rev(as.character(sort(periods)))) +
-  scale_x_continuous(
-    breaks = c(1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335),
-    labels = c("Jan","Feb","Mar","Apr","May","Jun",
-               "Jul","Aug","Sep","Oct","Nov","Dec")
-  ) +
-  facet_grid(year ~ ., switch = "y") +   # stack years vertically
-  labs(
-    x     = NULL,
-    y     = "Period",
-    title = paste0(window,"-day Window Lomb-Scargle Periodogram \n", site, ", ", ml)) +
-  theme_minimal(base_size = 13) +
-  theme(
-    panel.grid      = element_blank(),
-    plot.title      = element_text(hjust = 0.5, face = "bold"),
-    #strip.placement = "outside",         # year labels on left outside axis
-    axis.text.x     = element_text(angle = 45, hjust = 1),
     legend.position = "right"
   )
 

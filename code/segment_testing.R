@@ -20,29 +20,27 @@ df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
                      df$timeBgn)
 df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
-origin <- min(df$timeBgn) #timeBgn must be in posix for this
-
 # get times and values for function
 times <- df$elapsed_days 
 values <- df$residuals_phi
 
 
 #segment data
+window <- 20 #days
 
-window <- 60 #days
-step <- 2 #days
-#t_start <- seq(min(times), max(times) - window, by = step) #the starting date for each window
 
 #pick a segment to look at
-df$elapsed_days[which(df$timeBgn == "2023-04-01 00:00:00")] #to get idx of a specific date
-idx <-  2220  #window start elapsed day   #or use t_start[11] #example: 3 = third window
+df$elapsed_days[which(df$timeBgn == "2021-04-01 00:00:00")] #to get idx of a specific date
+idx <-  1826  #window start elapsed day   #or use t_start[11] #example: 3 = third window
 
 segment_times <- times[which(times == idx):which(times == (idx + window))] #get times and values for that segment
 segment_values <- values[which(times ==idx):which(times == (idx + window))] #get times and values for that segment
 
 threshold <- length(segment_times) > (window * 48)*.5 #are at least 1/2 the points present?
 
-plot(segment_times, segment_values, cex = 0.8, pch = 19, 
+plot(segment_times, segment_values, 
+     #type = "l", 
+     cex = 0.8, pch = 19, 
      main = paste("Segment starting at day", idx, "\nAre at least 1/2 of the points present?", threshold), 
      xlab = "Elapsed Days", ylab = "iso_pre-zeroed")
 
