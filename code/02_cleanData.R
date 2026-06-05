@@ -1,16 +1,19 @@
+#
+#
 # Review data for quality flags, low humidity (<5000 ppm), and outliers 
 # ONLY INCLUDES CLEANING OUTLIERS (by removing data >3 sd from a rolling 6-week mean)
 # Eventually add back in LH and quality/science review flags if necessary
+# output = csv named "iso_[site]_[ml]_clean.csv" with columns "timeBgn" and "iso" (d18O)
+#
+#
 
 #install.packages("zoo")
 library(zoo)
 library(ggplot2)
 
-wd <- getwd()
+sitech <- "WREF" #choose site
 
-sitech <- "CPER" #choose site
-
-df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv")) #change release date, eventually get them all on 2026
+df <- read.csv(paste0("data/iso_", sitech, "_release2024.csv")) #change release date, eventually get them all on 2026
 
 unique(df$verticalPosition)
 ml <- "top" #choose measurement level: 10 or "top"

@@ -12,7 +12,7 @@ library(lubridate)
 library(scales)
 
 
-site <- "CPER"
+site <- "WREF"
 ml <- "top"       #10 or "top"
 
 # load data from fitting_01_NEONdata
@@ -23,11 +23,14 @@ df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
                          df$timeBgn)
 df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
+# subset to 2021-2023 to have full years for plotting
+df <- subset(df, timeBgn >= as.POSIXct("2020-01-01 00:00:00", tz="GMT"))
+
 origin <- min(df$timeBgn) #timeBgn must be in posix for this
 
 # get times and values for function
-times = df$elapsed_days 
-values = df$residuals_phi
+times = df$elapsed_days - df$elapsed_days[1] #make elapsed days start at 0 for the function
+values = df$residuals
 
 
 # build modified L-S function for discrete periods
@@ -83,7 +86,7 @@ sliding_ls <- function(times, values, periods,
 
 # define parameters
 periods <- c(5:14)
-window <- 45 #days
+window <- 60 #days
 step <- 2 #days
 
 ls_map <- sliding_ls(
@@ -151,6 +154,64 @@ ggplot(ls_map, aes(x = origin + t_mid*86400, y = factor(period), fill = power)) 
     plot.title    = element_text(hjust = 0.5, face = "bold"),
     legend.position = "right"
   )
+
+
+title = "Sliding Window (60-day) Lomb-Scargle \n HARV, top"
+# line plot of power over time for each period:
+ggplot(ls_map, aes(x = date, y = power, 
+                   colour = factor(period), group = factor(period))) +
+  geom_line(linewidth = 0.8) +
+  scale_colour_viridis_d(name = "Period (days)") +
+  labs(x = "Date (mid-window)", y = "LS Power",
+       title = title) +
+  theme_minimal(base_size = 13)
+
+# line plot of power over time for each period, faceted by period:
+ggplot(ls_map, aes(x = date, y = power)) + 
+  geom_line(linewidth = 0.8, color = "darkblue") +
+  facet_wrap(~ period, ncol = 1) +
+  labs(x = "Date (mid-window)", y = "LS Power",
+       title = title) +
+  theme_minimal(base_size = 13)
+
+
+
+# average power of each period across all windows:
+avg_power <- ls_map %>% 
+  group_by(period) %>% 
+  summarize(avg_power = mean(power, na.rm = TRUE))
+avg_power
+
+# cluster periods by their average power across all windows:
+ggplot(avg_power, aes(x = factor(period), y = avg_power, fill = avg_power)) +
+  geom_col() +
+  scale_fill_gradient(low = "lightblue", high = "darkblue") +
+  labs(x = "Period (days)", y = "Average LS Power",
+       title = paste0("Average LS Power by Period \n", site, ", ", ml)) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "none")
+
+# Group 6,7 (weekly) together and 11-14 (biweekly) together, get the max of each group per window, and plot over time:
+ls_map <- ls_map %>%
+  mutate(group = case_when(
+    period >= 5 & period <= 7   ~ "weekly",
+    period >= 11 & period <= 14 ~ "biweekly",
+    TRUE                        ~ NA_character_
+  )) %>%
+  group_by(t_mid, group) %>%
+  summarize(max_power = max(power, na.rm = TRUE), .groups = "drop")
+# drop NAs in group column
+ls_map <- ls_map %>% filter(!is.na(group))
+
+ggplot(ls_map, aes(x = origin + t_mid*86400, y = max_power, color = group)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values = c("weekly" = "darkorange", "biweekly" = "darkblue")) +
+  labs(x = "Date (mid-window)", y = "Max LS Power",
+       title = paste0("Max LS Power for Weekly (5-7 day) and Biweekly (11-14 day) Groups \n", site, ", ", ml)) +
+  theme_minimal(base_size = 13) +
+  theme(legend.position = "right")
+
+
 
 #######################
 

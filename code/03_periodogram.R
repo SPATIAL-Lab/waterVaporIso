@@ -3,8 +3,6 @@
 #install.packages("lomb")
 library(lomb)
 
-wd <- getwd()
-
 ###### Testing the artificial data ######
 
 df<- read.csv(paste0(wd, "/data/test.csv")) # 24 and 168 hr (7 day) cycles
@@ -78,9 +76,9 @@ getpeaks(pg)
 
 ###### NEON data ######
 
-sitech <- "CPER" # choose site
+site <- "CPER" # choose site
 
-df <- read.csv(paste0(wd, "/data/iso_", sitech, "_release2024.csv"))
+df <- read.csv(paste0("data/iso_", site, "_release2024.csv"))
 
 #choose measurement level
 unique(df$verticalPosition)
