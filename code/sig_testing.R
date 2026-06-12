@@ -8,7 +8,7 @@
 #install.packages("dplR")
 library(dplR)
 
-site <- "HARV"
+site <- "CPER"
 ml <- "top"        #10 or "top"
 
 # load data from fitting_01_NEONdata
@@ -20,7 +20,7 @@ df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
 df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
 # get times and values for function
-times <- df$elapsed_days 
+times = df$elapsed_days - df$elapsed_days[1] #in case elapsed days doesn't start at 0
 values <- df$residuals
 
 #segment data
@@ -32,9 +32,9 @@ idx <-  1050  #window start elapsed day
 segment_times <- times[which(times == idx):which(times == (idx + window))] #get times and values for that segment
 segment_values <- values[which(times ==idx):which(times == (idx + window))] #get times and values for that segment
 
-plot(segment_times, segment_values, 
+plot(times, values, 
      #type = "l", 
-     cex = 0.8, pch = 19, 
+     cex = 0.3, pch = 19, 
      main = paste("Segment starting", df$timeBgn[which(times == idx)]), 
      xlab = "Elapsed Days", ylab = "iso_pre-zeroed")
 
@@ -43,24 +43,26 @@ plot(segment_times, segment_values,
 
 # 
 redf.dat <- redfit(x = values, t = times, 
-                   n50 = floor((max(times)-min(times))/60), # number is ~ how many days per segment, 50% overlap
-                   nsim = 100)
+                   n50 = floor((max(times)-min(times))/45), # number is approx how many days per segment, 50% overlap
+                   nsim = 100, 
+                   rhopre = 0.95,
+                   verbose = TRUE)
 
-par(tcl = 0.5, mar = rep(2.2, 4), mgp = c(1.1, 0.1, 0),xaxs="i")
 
+par(tcl = 0.5, mar = rep(2.2, 4), mgp = c(1.1, 0.1, 0),xaxs="i") #graphical params: smaller margins, ticks closer to axis, and x-axis intervals are "pretty"
 
-{plot(1/redf.dat[["freq"]][23:200], redf.dat[["gxxc"]][23:200], #7:100 ensures only periods between ~20 and ~1 are included
+{plot(1/redf.dat[["freq"]][7:200], redf.dat[["gxxc"]][7:200], #7:100 ensures only periods between ~20 and ~1 are included
      ylim = range(redf.dat[["ci99"]]/2, redf.dat[["gxxc"]]),
      type = "n", ylab = "Spectrum", xlab = "Period (days)",
      #main = paste0(window, "-day segment starting ", df$timeBgn[which(times == idx)]),
-     main = "whole HARV top series, ~60-day windows, nsim = 100",
+     main = "whole CPER top series, ~45-day windows, nsim = 100",
      axes = FALSE)
 grid()
-lines(1/redf.dat[["freq"]][23:200], redf.dat[["gxxc"]][23:200], col = "black",lwd=1.5)
-lines(1/redf.dat[["freq"]][23:200], smooth.spline(redf.dat[["ci99"]][23:200],spar = 0.8)$y, col = "#D95F02")
-lines(1/redf.dat[["freq"]][23:200], smooth.spline(redf.dat[["ci95"]][23:200],spar = 0.8)$y, col = "#7570B3")
-lines(1/redf.dat[["freq"]][23:200], smooth.spline(redf.dat[["ci90"]][23:200],spar = 0.8)$y, col = "#E7298A")
-freqs <- pretty(1/redf.dat[["freq"]][23:200])
+lines(1/redf.dat[["freq"]][7:200], redf.dat[["gxxc"]][7:200], col = "black",lwd=1.5)
+lines(1/redf.dat[["freq"]][7:200], smooth.spline(redf.dat[["ci99"]][7:200],spar = 0.8)$y, col = "#D95F02")
+lines(1/redf.dat[["freq"]][7:200], smooth.spline(redf.dat[["ci95"]][7:200],spar = 0.8)$y, col = "#7570B3")
+lines(1/redf.dat[["freq"]][7:200], smooth.spline(redf.dat[["ci90"]][7:200],spar = 0.8)$y, col = "#E7298A")
+freqs <- pretty(1/redf.dat[["freq"]][7:200])
 pers <- round(1 / freqs, 2)
 axis(1, at = freqs, labels = TRUE)
 axis(2)

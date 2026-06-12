@@ -33,7 +33,7 @@ iso <- stackEddy(filepath="../filesToStack00200",
                  avg = 30, 
                  var = c("dlta18OH2o", "dlta2HH2o", "rtioMoleWetH2o", 
                          "presAtm", "presCor", "temp", 
-                         "tempAir", "tempSoni"))
+                         "tempAir", "tempSoni")) #ANY OTHERS????
 
 #pull out Science Review flags
 sciRevw <- iso[["scienceReviewFlags"]]
@@ -59,6 +59,14 @@ df <- df[,c("timeBgn", "timeEnd", "verticalPosition", "data.isoH2o.dlta18OH2o.me
 
 #save only the bottom and top measurement levels
 df <- subset(df, verticalPosition %in% c("010", max(df$verticalPosition)))
+
+#rename columns
+#colnames(df) <- c("timeBgn", "timeEnd", "verticalPosition", "dlta18OH2o", 
+#                  "dlta2HH2o", "rtioMoleWetH2o",
+#                  "dlta18OH2o.qfFinl", "dlta2HH2o.qfFinl")
+
+#use only 2021 and later data (ADD END DATE?????)
+df <- subset(df, timeBgn >= as.POSIXct("2021-01-01 00:00", tz="GMT"))
 
 #create .csv
 write.csv(df, paste0(wd, "/data/iso_", site, "_release2026.csv"), row.names = F)
