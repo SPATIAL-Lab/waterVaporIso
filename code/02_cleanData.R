@@ -11,7 +11,7 @@
 library(zoo)
 library(ggplot2)
 
-sitech <- "WREF" #choose site
+sitech <- "CPER" #choose site
 
 df <- read.csv(paste0("data/iso_", sitech, "_release2024.csv")) #change release date, eventually get them all on 2026
 
