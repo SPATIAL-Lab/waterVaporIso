@@ -22,7 +22,7 @@ df2$timeBgn <- ifelse(nchar(df2$timeBgn) == 10,       # length of "YYYY-MM-DD"
 df2$timeBgn <- as.POSIXct(df2$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
 
-df_combined <- inner_join(df, df2, by = "timeBgn")
+df_combined <- inner_join(df, df2, by = "timeBgn") #inner_join to keep only rows with matching timeBgn in both dataframes
 
 
 # z-score to compare
