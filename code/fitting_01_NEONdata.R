@@ -149,3 +149,6 @@ print(results)
 # plot
 #lines(x, pred_values2, col = "orange", lwd = 1)
 #lines(x, resid2, col = "darkgreen", lwd = 0.2)
+
+
+

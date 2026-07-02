@@ -11,9 +11,9 @@
 library(zoo)
 library(ggplot2)
 
-sitech <- "CPER" #choose site
+site <- "CPER" #choose site
 
-df <- read.csv(paste0("data/iso_", sitech, "_release2024.csv")) #change release date, eventually get them all on 2026
+df <- read.csv(paste0("data/iso/iso_", site, "_release2026.csv")) #change release date, eventually get them all on 2026
 
 unique(df$verticalPosition)
 ml <- "top" #choose measurement level: 10 or "top"
@@ -33,15 +33,15 @@ df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
                      df$timeBgn)
 df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
 
-ggplot(df, aes(x = timeBgn, y = data.isoH2o.dlta18OH2o.mean)) +
+ggplot(df, aes(x = timeBgn, y = dlta18OH2o)) +
   geom_point(size = 0.8) +
   labs(x = "date", y = expression(paste(delta^{18}, "O permil")), 
-       title = paste(sitech, "Water Vapor Isotopes")) +
+       title = paste(site, "Water Vapor Isotopes")) +
   theme_minimal()
 
 
 # Clean data by eliminating SDs from the mean
-roll_mean <- rollapply(df$data.isoH2o.dlta18OH2o.mean, 
+roll_mean <- rollapply(df$dlta18OH2o, 
                        2016,  #2016 = average 6 weeks of data points, on the ends avg just available weeks
                        mean, 
                        na.rm = T, 
@@ -49,24 +49,24 @@ roll_mean <- rollapply(df$data.isoH2o.dlta18OH2o.mean,
                        partial = T)
 #sum(is.na(roll_mean))
 
-ggplot(df, aes(x = timeBgn, y = data.isoH2o.dlta18OH2o.mean)) +
+ggplot(df, aes(x = timeBgn, y = dlta18OH2o)) +
   geom_point(size = 0.8, color = "lightblue") +
   labs(x = "date", y = expression(paste(delta^{18}, "O permil")), 
-       title = paste(sitech, "Water Vapor Isotopes (ml = ", ml, ")")) +
+       title = paste(site, "Water Vapor Isotopes (ml = ", ml, ")")) +
   guides(color = guide_legend(override.aes = list(size = 8))) +
   theme_minimal() +
   geom_line(aes(y = roll_mean))
 
-roll_sd <- rollapply(df$data.isoH2o.dlta18OH2o.mean, 2016, FUN = function(z) sd(z, na.rm = T),
+roll_sd <- rollapply(df$dlta18OH2o, 2016, FUN = function(z) sd(z, na.rm = T),
                      fill = NA, partial = T)
 
 upper_bound <- roll_mean + roll_sd*3
 lower_bound <- roll_mean - roll_sd*3
 
-ggplot(df, aes(x = timeBgn, y = data.isoH2o.dlta18OH2o.mean)) +
+ggplot(df, aes(x = timeBgn, y = dlta18OH2o)) +
   geom_point(size = 0.8, color = "lightblue") +
   labs(x = "date", y = expression(paste(delta^{18}, "O permil")), 
-       title = paste(sitech, "Water Vapor Isotopes (ml = ", ml, ")")) +
+       title = paste(site, "Water Vapor Isotopes (ml = ", ml, ")")) +
   theme_minimal() +
   geom_line(aes(y = upper_bound)) +
   geom_line(aes(y = roll_mean), color = "red") +

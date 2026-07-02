@@ -4,7 +4,11 @@ library(neonUtilities)
 
 
 #choose site
-site <- "SCBI"
+site <- "CPER"
+
+# !!!!!!!!!!
+#before downloading another site, check current filesToStack folder is empty !!!
+
 
 #entire data file for a site:
 zipsByProduct(dpID = "DP4.00200.001", 
@@ -14,7 +18,7 @@ zipsByProduct(dpID = "DP4.00200.001",
               startdate = "2021-01", 
               enddate = "2025-06", 
               savepath = "data/", 
-              check.size = T, 
+              check.size = F, 
               include.provisional = F) #default doesn't include provisional
 
 
@@ -109,10 +113,7 @@ df <- subset(df, !verticalPosition %in% c("co2Arch", "co2High",
                                           "co2Low", "co2Med", 
                                           "co2Zero", "h2oHigh", 
                                           "h2oLow", "h2oMed"))
-unique(df$verticalPosition)
 
-##save only the bottom, top, and 1.5 (for barometer) measurement levels
-df <- subset(df, verticalPosition %in% c("010", "015", max(df$verticalPosition)))
 
 colnames(df)
 
@@ -149,6 +150,12 @@ colnames(df) <- c("timeBgn", "timeEnd",
                   "veloXaxsYaxsErth.qfFinl", 
                   "veloXaxsYaxsErth.qmSoniSgnlPoorFail")
 
+
+
+##save only the bottom, top, and CHECK WITCH LEVEL THE BARO IS ON (sometimes 1.5, sometime 3.5)
+unique(df$verticalPosition)
+df <- subset(df, verticalPosition %in% c("010", "035", max(df$verticalPosition)))
+
 #create .csv
 write.csv(df, paste0("data/met/met_", site, "_release2026.csv"), row.names = F)
 
@@ -167,7 +174,7 @@ rh <- loadByProduct(dpID = "DP1.00098.001",
 names(rh)
 
 #pull out Science Review flags
-sciRevw <- rh[["science_review_flags_00098"]]
+#sciRevw <- rh[["science_review_flags_00098"]]
 
 #get data
 rh_dat <- rh[["RH_30min"]]
