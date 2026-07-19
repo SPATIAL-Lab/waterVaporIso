@@ -2,13 +2,15 @@
 
 library(neonUtilities)
 
+source("neon_token.R")
 
 #choose site
-site <- "CPER"
+site <- "OSBS"
 
 # !!!!!!!!!!
 #before downloading another site, check current filesToStack folder is empty !!!
-
+length(list.files("data/filesToStack00200")) #should be about 1746 if there are files in there
+unlink("data/filesToStack00200/*", recursive = TRUE)
 
 #entire data file for a site:
 zipsByProduct(dpID = "DP4.00200.001", 
@@ -19,7 +21,8 @@ zipsByProduct(dpID = "DP4.00200.001",
               enddate = "2025-06", 
               savepath = "data/", 
               check.size = F, 
-              include.provisional = F) #default doesn't include provisional
+              include.provisional = F, 
+              token = token) #default doesn't include provisional
 
 
 #isotopes and water vapor data:
@@ -51,7 +54,7 @@ met <- stackEddy(filepath = "data/filesToStack00200",
 #  print("No science review flags. No csv created.")
 #}
 
-#issLog <- met[["issueLog"]] 
+#issLog <- iso[["issueLog"]] 
 #issue log available at https://data.neonscience.org/data-products/DP4.00200.001#issueLog
 
 #pull out data
@@ -100,7 +103,7 @@ colnames(df) <- c("timeBgn", "timeEnd",
 #df <- subset(df, timeBgn >= as.POSIXct("2021-01-01 00:00", tz="GMT"))
 
 #create .csv
-write.csv(df, paste0("data/iso/iso_", site, "_release2026.csv"), row.names = F)
+write.csv(df, paste0("data/iso/iso_", site, "_release2026_2.csv"), row.names = F)
 
 
 #### met data ####
@@ -152,9 +155,9 @@ colnames(df) <- c("timeBgn", "timeEnd",
 
 
 
-##save only the bottom, top, and CHECK WITCH LEVEL THE BARO IS ON (sometimes 1.5, sometime 3.5)
+##save only the bottom, top, and CHECK WITCH LEVEL THE BARO IS ON (it'll end in 5)
 unique(df$verticalPosition)
-df <- subset(df, verticalPosition %in% c("010", "035", max(df$verticalPosition)))
+df <- subset(df, verticalPosition %in% c("010", "025", max(df$verticalPosition)))
 
 #create .csv
 write.csv(df, paste0("data/met/met_", site, "_release2026.csv"), row.names = F)
@@ -169,12 +172,12 @@ rh <- loadByProduct(dpID = "DP1.00098.001",
               startdate = "2021-01", 
               enddate = "2025-06",
               check.size = F, 
-              include.provisional = F) #default doesn't include provisional
-
+              include.provisional = F,  #default doesn't include provisional
+              token = token)
 names(rh)
 
 #pull out Science Review flags
-#sciRevw <- rh[["science_review_flags_00098"]]
+sciRevw <- rh[["science_review_flags_00098"]]
 
 #get data
 rh_dat <- rh[["RH_30min"]]
