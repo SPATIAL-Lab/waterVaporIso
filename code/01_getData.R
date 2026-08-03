@@ -1,11 +1,18 @@
+##
+# DOWNLOAD DATA
+#
 # download NEON water isotope and met data for a NEON site 
+# download relative humidity separately
+# download other met data???
+#
+#
 
 library(neonUtilities)
 
 source("neon_token.R")
 
 #choose site
-site <- "OSBS"
+site <- "SCBI"
 
 # !!!!!!!!!!
 #before downloading another site, check current filesToStack folder is empty !!!
@@ -103,7 +110,7 @@ colnames(df) <- c("timeBgn", "timeEnd",
 #df <- subset(df, timeBgn >= as.POSIXct("2021-01-01 00:00", tz="GMT"))
 
 #create .csv
-write.csv(df, paste0("data/iso/iso_", site, "_release2026_2.csv"), row.names = F)
+write.csv(df, paste0("data/iso/iso_", site, "_release2026.csv"), row.names = F)
 
 
 #### met data ####
@@ -157,7 +164,7 @@ colnames(df) <- c("timeBgn", "timeEnd",
 
 ##save only the bottom, top, and CHECK WITCH LEVEL THE BARO IS ON (it'll end in 5)
 unique(df$verticalPosition)
-df <- subset(df, verticalPosition %in% c("010", "025", max(df$verticalPosition)))
+df <- subset(df, verticalPosition %in% c("010", "015", max(df$verticalPosition)))
 
 #create .csv
 write.csv(df, paste0("data/met/met_", site, "_release2026.csv"), row.names = F)

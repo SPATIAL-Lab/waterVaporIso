@@ -1,7 +1,11 @@
+## 
+# CLEAN ISOTOPE DATA
+#
 # Review data for quality flags, low humidity (<5000 ppm), and outliers 
-# ONLY INCLUDES CLEANING OUTLIERS (by removing data >3 sd from a rolling 6-week mean)
-# Eventually add back in LH and quality/science review flags if necessary
-# output = csv named "iso_[site]_[ml]_clean.csv" with columns "timeBgn" and "iso" (d18O)
+# ONLY INCLUDES REMOVING FLOW RATE FLAGS and CLEANING OUTLIERS (by removing data >3 sd from a rolling 6-week mean)
+# Eventually add back in LH?
+# output = iso/clean directory, same csv but with outlier rows removed
+# Note: rtiomolweth2o isn't included in the data cleaning!!
 #
 #
 
