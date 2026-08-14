@@ -37,6 +37,10 @@ ggplot(dfm, aes(x = timeBgn, y = tempAirTop)) +
 
 
 # to get q: 
-# temp = dfrh$tempRHMean (C)
-# rh = dfrh$RHMean (%)
-# pres = dfm$presAtm (kPa)
+# Use the formula: q = (r * Mw) / (r * Mw + (1 - r) * Md)
+# where r = mole fraction of water vapor (rtioMoleWetH2o mol/mol (NEON is mmol/mol)), Mw = molar mass of water (18.015 g/mol), Md = molar mass of dry air (28.97 g/mol)
+
+df$q <- (df$rtioMoleWetH2o * 0.001 * 18.015) /
+  ((df$rtioMoleWetH2o * 0.001 * 18.015) + ((1 - (df$rtioMoleWetH2o * 0.001)) * 28.97))
+
+

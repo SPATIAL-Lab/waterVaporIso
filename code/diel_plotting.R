@@ -1,30 +1,37 @@
 # diel plotting
 # 
 # plot a week or so at a time with shaded areas indicating day and night
-# plot without the annual trend removed
+# plot with the annual trend removed
 
 library(ggplot2)
 library(suncalc)
 library(lubridate)
 library(httr)
 library(jsonlite)
+library(dplyr)
 
-site <- "SCBI"
+site <- "CPER"
 
-df <- read.csv(paste0("data/iso/iso_", site, "_release2026.csv"))
-#df <- read.csv(paste0("data/met/met_", site, "_release2026.csv"))
+iso <- read.csv(paste0("data/residuals/iso_", site, "_top_residuals.csv"))
+pres <- read.csv(paste0("data/residuals/pres_", site, "_top_residuals.csv"))
+temp <- read.csv(paste0("data/residuals/temp_", site, "_top_residuals.csv"))
 
-df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
+
+for (nm in c("iso", "pres", "temp")) {
+  df <- get(nm)
+  df$timeBgn <- ifelse(nchar(df$timeBgn) == 10,       # length of "YYYY-MM-DD"
                      paste0(df$timeBgn, " 00:00:00"), # append midnight
                      df$timeBgn)
-df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
+  df$timeBgn <- as.POSIXct(df$timeBgn, format="%Y-%m-%d %H:%M:%S", tz="GMT")
+  assign(nm, df)
+}
 
-unique(df$verticalPosition)
-#df <- subset(df, verticalPosition %in% max(df$verticalPosition))
+names(pres)[names(pres) == "residuals"] <- "pres_residual"
+names(temp)[names(temp) == "residuals"] <- "temp_residual"
 
-var <- "dlta18OH2o"
 
-plot(df$timeBgn, df[,which(names(df) == var)], cex = 0.3, pch = 19, col = "blue", ylab = var)
+df <- inner_join(iso[,c(1,9,10,11,12)], pres[c(1,4)], by = "timeBgn")
+df <- inner_join(df, temp[c(1,4)], by = "timeBgn")
 
 
 
@@ -44,17 +51,27 @@ weeks <- subset(df, timeBgn >= as.POSIXct(start_end[1]) & timeBgn <= as.POSIXct(
 
 
 # remove NAs from line plot
-weeks <- weeks[!is.na(weeks[,which(names(df) == var)]), ]
+#weeks <- weeks[!is.na(weeks[,which(names(df) == col)]), ]
 
 # basic plot
-plot(weeks$timeBgn, weeks[,which(names(df) == var)], cex = 0.3, pch = 19, col = "blue", ylab = var)
-
-ggplot(weeks, aes(x = timeBgn, y = weeks[,which(names(df) == var)], color = factor(verticalPosition))) +
-  geom_line(size = 0.8) +
-  scale_color_manual(values = c("lightblue", "blue"), name = "ML") +
-  labs(y = var)
+ggplot(weeks, aes(x = timeBgn, y = dlta18O_residual)) +
+  geom_line(size = 0.8)
+  #scale_color_manual(values = c("lightblue", "blue"), name = "ML")
  
+# variables to plot
+names(weeks)
 
+{
+var1 <- "dlta18O_residual"
+var2 <- "q_residual"
+lab1 <- "d18O"
+lab2 <- "sp. humidity"
+col1 <- "blue"
+col2 <- "orange3"
+var3 <- "temp_residual"
+lab3 <- "temp"
+col3 <- "cyan3"
+}
 
 {
 # plot with day and night shading
@@ -99,43 +116,29 @@ ggplot() +
   geom_rect(data = night_rects,
             aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
             fill = "gray30", alpha = 0.3) +
-  geom_line(data = weeks, 
-            aes(x = timeBgn, y = weeks[,which(names(df) == var)], color = factor(verticalPosition)), 
+  geom_line(data = weeks,
+            aes(x = timeBgn, y = .data[[var1]], color = lab1),
             linewidth = 0.8) +
-  #geom_point(data = weeks,
-  #          aes(x = timeBgn, y = weeks[,which(names(df) == var)], color = factor(verticalPosition)), 
-  #          size = 0.9) +
-  scale_color_manual(values = c("lightblue", "blue"), name = "ML") +
+  geom_line(data = weeks,
+            aes(x = timeBgn, y = .data[[var2]]*1000, color = lab2),
+            linewidth = 0.8) +
+  #geom_line(data = weeks,
+  #          aes(x = timeBgn, y = .data[[var3]], color = lab3), 
+  #          linewidth = 0.8) +
+  scale_color_manual(
+    name   = NULL,
+    values = c("d18O" = col1, "sp. humidity" = col2)#, "temp" = col3)
+  ) +
   scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  labs(x = NULL, y = var,
-       title = paste0(site, ", Start: ", dates[1])) +
-  theme_minimal(base_size = 13) +
-  theme(
-    axis.text.x  = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
-  )
+  labs(x = NULL, 
+       y = "z-score",
+       title = paste0(site, ", start: ", dates[1], "; correlation = ", signif(cor(weeks[[var1]], weeks[[var2]]), 4))) +
+  theme_minimal(base_size = 10) +
+  theme(axis.text.x  = element_text(angle = 45, hjust = 1),
+    panel.grid.minor = element_blank())
 }
 
-ggplot() +
-  geom_rect(data = night_rects,
-            aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
-            fill = "gray30", alpha = 0.3) +
-  #geom_line(data = weeks, 
-  #          aes(x = timeBgn, y = weeks[,which(names(df) == var)], color = factor(verticalPosition)), 
-  #          linewidth = 0.8) +
-  geom_point(data = weeks,
-             aes(x = timeBgn, y = weeks[,which(names(df) == var)], color = factor(verticalPosition)), 
-             size = 0.9) +
-  scale_color_manual(values = c("lightblue", "blue"), name = "ML") +
-  scale_x_datetime(date_breaks = "2 days", date_labels = "%b %d") +
-  labs(x = NULL, y = var,
-       title = paste0(site, ", Start: ", dates[1])) +
-  theme_minimal(base_size = 13) +
-  theme(
-    axis.text.x  = element_text(angle = 45, hjust = 1),
-    panel.grid.minor = element_blank()
-  )
 
 # save plot
-ggsave(paste0("media/diel/", site, "_", dates[1], ".png"), width = 1000, height = 751, units = "px", dpi = 96)
+ggsave(paste0("plots/diel/isoq_", site, "_", dates[1], ".png"), width = 1000, height = 751, units = "px", dpi = 96)
 

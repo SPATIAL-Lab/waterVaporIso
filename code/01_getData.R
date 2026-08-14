@@ -12,7 +12,7 @@ library(neonUtilities)
 source("neon_token.R")
 
 #choose site
-site <- "SCBI"
+site <- "SRER"
 
 # !!!!!!!!!!
 #before downloading another site, check current filesToStack folder is empty !!!
@@ -164,7 +164,7 @@ colnames(df) <- c("timeBgn", "timeEnd",
 
 ##save only the bottom, top, and CHECK WITCH LEVEL THE BARO IS ON (it'll end in 5)
 unique(df$verticalPosition)
-df <- subset(df, verticalPosition %in% c("010", "015", max(df$verticalPosition)))
+df <- subset(df, verticalPosition %in% c("010", "035", max(df$verticalPosition)))
 
 #create .csv
 write.csv(df, paste0("data/met/met_", site, "_release2026.csv"), row.names = F)
